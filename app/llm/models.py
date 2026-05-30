@@ -21,6 +21,6 @@ ANALYTICS_LLM = ChatGroq(
 
 
 SUMMARY_LLM = ChatGroq(
-    model="mixtral-8x7b-32768",
+    model= "llama-3.1-8b-instant",    #"mixtral-8x7b-32768",
     api_key=os.getenv("GROQ_API_KEY")
 )
