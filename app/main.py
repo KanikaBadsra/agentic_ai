@@ -51,16 +51,13 @@ def chat(request: ChatRequest):
         logger.info(
             f"Execution time: {execution_time} sec"
         )
-        #return result
+
         return {
-    "answer": result.get("final_answer", ""),
-    "trace": result["execution_trace"],
-    "risk_level": result["risk_level"],
-
-    "requires_review": result["requires_human_review"],
-
-    "trace": result["execution_trace"]
-}
+            "answer": result.get("final_answer", ""),
+            "trace": result.get("execution_trace", []),
+            "risk_level": result.get("risk_level", "UNKNOWN"),
+            "requires_review": result.get("requires_human_review", True)
+        }
 
     except Exception as e:
 
