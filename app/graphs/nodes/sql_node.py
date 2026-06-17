@@ -33,7 +33,8 @@ def sql_node(state):
         )
         return {
             "sql_query": sql_query,
-            "result": [],
+            "sql_result": [],
+            "guardrail_status": "BLOCKED",
             "validation_error": "Generated SQL query failed safety validation."
         }
     
@@ -49,5 +50,6 @@ def sql_node(state):
     )
     return {
         "sql_query": sql_query,
-        "result": result
+        "sql_result": result,
+        "guardrail_status": "PASSED"
     }

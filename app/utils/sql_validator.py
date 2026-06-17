@@ -16,8 +16,6 @@ def validate_sql(query: str):
     for keyword in FORBIDDEN_KEYWORDS:
 
         if keyword in upper_query:
-            raise ValueError(
-                f"Forbidden SQL operation detected: {keyword}"
-            )
+            return False
 
     return True

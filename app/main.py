@@ -52,13 +52,23 @@ def chat(request: ChatRequest):
             f"Execution time: {execution_time} sec"
         )
 
+        # return {
+        #     "answer": result.get("final_answer", ""),
+        #     "trace": result.get("execution_trace", []),
+        #     "risk_level": result.get("risk_level", "UNKNOWN"),
+        #     "requires_review": result.get("requires_human_review", True)
+        # }
         return {
-            "answer": result.get("final_answer", ""),
-            "trace": result.get("execution_trace", []),
-            "risk_level": result.get("risk_level", "UNKNOWN"),
-            "requires_review": result.get("requires_human_review", True)
-        }
-
+        "answer": result["final_answer"],
+        "confidence_score":
+            result.get("confidence_score"),
+        "risk_level":
+            result.get("risk_level"),
+        "requires_human_review":
+            result.get("requires_human_review"),
+        "guardrail_status":
+            result.get("guardrail_status")
+    }
     except Exception as e:
 
         raise HTTPException(

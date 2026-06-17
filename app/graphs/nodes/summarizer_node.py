@@ -12,7 +12,8 @@ from app.utils.timer import (
 )
 from app.services.confidence_service import (
     calculate_confidence,
-    determine_risk
+    determine_risk,
+    requires_human_review
 )
 llm = SUMMARY_LLM
 @track_time("Summarizer Node")
@@ -70,9 +71,9 @@ Generate a concise business insight.
         confidence
     )
 
-    requires_review = (
-        confidence < 0.6
-    )
+    requires_review = requires_human_review(
+    confidence
+)
 
     return {
         "final_answer": response.content,
