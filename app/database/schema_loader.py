@@ -5,7 +5,7 @@ SCHEMA_CACHE = None
 def get_database_schema():
     global SCHEMA_CACHE
 
-    if SCHEMA_CACHE:
+    if SCHEMA_CACHE is not None:
         return SCHEMA_CACHE
 
     inspector = inspect(engine)
