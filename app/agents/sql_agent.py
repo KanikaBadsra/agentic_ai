@@ -74,6 +74,9 @@ Rules:
 - No markdown
 - NO explanations
 - Use ONLY existing tables/columns
+- Do not reference columns that are not present in the schema.
+- If filtering by region, use sales.region_id and join to regions.region_id.
+- The regions table contains region_name.
 
 Database Schema:
 

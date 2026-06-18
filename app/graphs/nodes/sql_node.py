@@ -38,10 +38,18 @@ def sql_node(state):
             "validation_error": "Generated SQL query failed safety validation."
         }
     
-    result = execute_query(sql_query)
+    try:
+        result = execute_query(sql_query)
+        logger.info(f"SQL Query executed: {sql_query}")
+        logger.info(f"Query result: {result}")
+        guardrail_status = "PASSED"
+    except Exception as error:
+        logger.error(f"SQL execution failed: {error}")
+        result = []
+        guardrail_status = "BLOCKED"
+        sql_query = sql_query
+        state["sql_error"] = str(error)
 
-    logger.info(f"SQL Query executed: {sql_query}")
-    logger.info(f"Query result: {result}")
     duration = end_timer(timer)
 
     add_trace(
@@ -51,5 +59,5 @@ def sql_node(state):
     return {
         "sql_query": sql_query,
         "sql_result": result,
-        "guardrail_status": "PASSED"
+        "guardrail_status": guardrail_status
     }
