@@ -1,3 +1,20 @@
+High-Level Request-to-Response Flow
+1. Client calls /chat
+2. FastAPI builds state with question and session_id
+3. graph.invoke(...) runs the graph:
+    multi_agent_node
+    summarizer_node
+4. multi_agent_node:
+    asks supervisor which agents to run
+    runs SQL/RAG/analytics as required
+    aggregates outputs into state
+5. summarizer_node:
+    reads SQL results + documents + history
+    asks SUMMARY_LLM for final answer
+    calculates confidence/risk
+6. /chat returns the final answer and metadata
+
+
 NexusIQ — Complete Interview Story
 
 Project Introduction:
@@ -438,3 +455,69 @@ New Architecture:
     | llama-3.1-8b-instant | routing/summarization |
     | deepseek-r1-distill  | reasoning             |
     | mixtral-8x7b         | analytics             |
+
+
+Project Execution Flow
+1. Request enters FastAPI
+main.py
+POST /chat accepts question + session_id
+Builds input state and calls graph.invoke(...)
+2. Graph orchestration
+main_graph.py
+Graph nodes:
+START
+multi_agent
+summarizer
+END
+3. Agent selection and execution
+multi_agent_node.py
+Calls supervisor_agent(question)
+supervisor_agent.py
+Supervisor returns one or more of:
+sql_agent
+rag_agent
+analytics_agent
+4. SQL path
+sql_node.py
+Generates SQL via:
+sql_agent.py
+schema_loader.py
+Validates SQL
+Executes query:
+query_executor.py
+connection.py
+Returns:
+sql_query
+sql_result
+guardrail_status
+5. RAG path
+rag_node.py
+Retrieves docs using:
+retriever.py
+Returns:
+documents
+6. Analytics path
+analytics_agent.py
+Runs only if selected
+Adds analytics-specific state output
+7. Summarization and metadata
+summarizer_node.py
+Uses:
+app.llm.models.SUMMARY_LLM
+conversation history via app.memory.conversation_memory
+Reads state:
+documents
+SQL result state keyed as result (possible mismatch)
+Produces:
+final_answer
+confidence_score
+risk_level
+requires_human_review
+8. Response return
+main.py
+Returns JSON:
+answer
+confidence_score
+risk_level
+requires_human_review
+guardrail_status

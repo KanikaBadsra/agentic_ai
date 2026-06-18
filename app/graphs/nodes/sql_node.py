@@ -57,6 +57,6 @@ def sql_node(state):
     )
     return {
         "sql_query": sql_query,
-        "sql_result": result,
+        "result": result,
         "guardrail_status": guardrail_status
     }
