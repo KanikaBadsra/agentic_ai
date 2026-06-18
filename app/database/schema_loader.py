@@ -1,7 +1,12 @@
 from sqlalchemy import inspect
 from app.database.connection import engine
 
+SCHEMA_CACHE = None
 def get_database_schema():
+    global SCHEMA_CACHE
+
+    if SCHEMA_CACHE:
+        return SCHEMA_CACHE
 
     inspector = inspect(engine)
 
@@ -22,4 +27,5 @@ def get_database_schema():
                 f"({column['type']})\n"
             )
 
-    return schema_text
+    SCHEMA_CACHE = schema_text
+    return SCHEMA_CACHE

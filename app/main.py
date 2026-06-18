@@ -34,7 +34,7 @@ def chat(request: ChatRequest):
             "user",
             request.question
         )
-
+        logger.info(f"Graph Result: {result}")
         # SAVE ASSISTANT RESPONSE
         save_message(
             request.session_id,
