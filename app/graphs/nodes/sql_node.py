@@ -44,8 +44,7 @@ def sql_node(state):
         logger.info(f"Query result: {result}")
         guardrail_status = "PASSED"
     except Exception as error:
-        logger.error(f"SQL execution failed: {error}")
-        result = []
+        logger.error(f"SQL execution failed: {error}")        
         guardrail_status = "BLOCKED"
         sql_query = sql_query
         state["sql_error"] = str(error)
