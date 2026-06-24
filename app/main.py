@@ -5,8 +5,30 @@ from app.graphs.main_graph import graph
 import time
 from app.observability.logger import logger
 from app.memory.conversation_memory import save_message
-app = FastAPI()
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
+app = FastAPI()
+limiter = Limiter(
+    key_func=get_remote_address
+)
+app.state.limiter = limiter
+
+app.add_exception_handler(
+    RateLimitExceeded,
+    lambda request, exc: JSONResponse(
+        status_code=429,
+        content={
+            "detail": "Rate limit exceeded"
+        }
+    )
+)
+
+app.add_middleware(
+    SlowAPIMiddleware
+)
 
 class ChatRequest(BaseModel):
     question: str
@@ -17,8 +39,8 @@ class ChatRequest(BaseModel):
 def home():
     return {"message": "NexusIQ Running"}
 
-
 @app.post("/chat")
+@limiter.limit("10/minute")
 def chat(request: ChatRequest):
 
     try:
