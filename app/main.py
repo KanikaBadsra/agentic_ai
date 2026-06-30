@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.graphs.main_graph import graph
@@ -9,13 +10,16 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-
+from jose import jwt
+from fastapi.security import HTTPBearer
+from app.auth.auth import get_current_user, verify_token, create_access_token
+security = HTTPBearer()
 app = FastAPI()
+
 limiter = Limiter(
     key_func=get_remote_address
 )
 app.state.limiter = limiter
-
 app.add_exception_handler(
     RateLimitExceeded,
     lambda request, exc: JSONResponse(
@@ -39,22 +43,38 @@ class ChatRequest(BaseModel):
 def home():
     return {"message": "NexusIQ Running"}
 
+@app.post("/login")
+def login():
+
+    token = create_access_token(
+        username="admin",
+        role="Admin"
+    )
+
+    return {
+        "access_token": token
+    }
+
+
 @app.post("/chat")
 @limiter.limit("10/minute")
-def chat(request: ChatRequest):
+def chat(request: Request,
+    body: ChatRequest,
+    user = Depends(get_current_user)):
 
     try:
 
         start_time = time.time()
         result = graph.invoke({
-            "question": request.question,
-            "session_id": request.session_id
+            "question": body.question,
+            "session_id": body.session_id,
+            "user_role": user["role"]
         })
          # SAVE USER MESSAGE
         save_message(
-            request.session_id,
+            body.session_id,
             "user",
-            request.question
+            body.question
         )
         logger.info(f"Graph Result: {result}")
         # SAVE ASSISTANT RESPONSE

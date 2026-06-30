@@ -30,3 +30,4 @@ class GraphState(TypedDict):
 
     requires_human_review: bool
     guardrail_status: str
+    user_role: str

@@ -9,6 +9,7 @@ from app.utils.timer import (
     start_timer,
     end_timer
 )
+from app.security.rbac import ROLE_PERMISSIONS
 
 @track_time("SQL Node")
 def sql_node(state):
@@ -22,11 +23,18 @@ def sql_node(state):
 )
 
     question = state["question"]
+    role = state.get("user_role", "Viewer")
 
     sql_query = generate_sql(question)
     #sql_query = clean_sql_query(sql_query)
     sql_query = extract_sql_query(sql_query)
     is_safe = validate_sql(sql_query)
+    if not ROLE_PERMISSIONS[role]["sql"]:
+        return {
+            "validation_error": "Permission denied",
+            "guardrail_status": "BLOCKED"
+        }    
+    
     if not is_safe:
         logger.warning(
             f"Generated SQL query failed validation: {sql_query}"
@@ -38,7 +46,7 @@ def sql_node(state):
             "validation_error": "Generated SQL query failed safety validation."
         }
     
-    try:
+    try:        
         result = execute_query(sql_query)
         logger.info(f"SQL Query executed: {sql_query}")
         logger.info(f"Query result: {result}")
