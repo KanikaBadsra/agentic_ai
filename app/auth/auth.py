@@ -1,9 +1,12 @@
-from fastapi import Depends, HTTPException, security
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt
 
 SECRET_KEY = "nexusiq-secret"
 
 ALGORITHM = "HS256"
+security = HTTPBearer()
+
 def get_current_user2(
     credentials=Depends(security)
 ):
@@ -12,7 +15,7 @@ def get_current_user2(
     )
 
 def get_current_user(
-    credentials: security.HTTPAuthorizationCredentials = Depends(security)):
+    credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     try:
         payload = verify_token(token)
