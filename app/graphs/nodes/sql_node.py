@@ -25,16 +25,29 @@ def sql_node(state):
     question = state["question"]
     role = state.get("user_role", "Viewer")
 
-    sql_query = generate_sql(question)
-    #sql_query = clean_sql_query(sql_query)
-    sql_query = extract_sql_query(sql_query)
-    is_safe = validate_sql(sql_query)
+    result = []
+    guardrail_status = "BLOCKED"
+
     if not ROLE_PERMISSIONS[role]["sql"]:
         return {
             "validation_error": "Permission denied",
             "guardrail_status": "BLOCKED"
-        }    
-    
+        }
+
+    try:
+        generated_sql = generate_sql(question)
+        sql_query = extract_sql_query(generated_sql)
+    except Exception as error:
+        logger.warning(f"SQL generation failed: {error}")
+        state["sql_error"] = str(error)
+        return {
+            "sql_query": "",
+            "sql_result": [],
+            "guardrail_status": "BLOCKED",
+            "validation_error": str(error)
+        }
+
+    is_safe = validate_sql(sql_query)
     if not is_safe:
         logger.warning(
             f"Generated SQL query failed validation: {sql_query}"
@@ -46,15 +59,13 @@ def sql_node(state):
             "validation_error": "Generated SQL query failed safety validation."
         }
     
-    try:        
+    try:
         result = execute_query(sql_query)
         logger.info(f"SQL Query executed: {sql_query}")
         logger.info(f"Query result: {result}")
         guardrail_status = "PASSED"
     except Exception as error:
-        logger.error(f"SQL execution failed: {error}")        
-        guardrail_status = "BLOCKED"
-        sql_query = sql_query
+        logger.error(f"SQL execution failed: {error}")
         state["sql_error"] = str(error)
 
     duration = end_timer(timer)

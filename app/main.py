@@ -79,7 +79,7 @@ def chat(request: Request,
         logger.info(f"Graph Result: {result}")
         # SAVE ASSISTANT RESPONSE
         save_message(
-            request.session_id,
+            body.session_id,
             "assistant",
             result.get("final_answer", "")
         )
@@ -101,16 +101,12 @@ def chat(request: Request,
         #     "requires_review": result.get("requires_human_review", True)
         # }
         return {
-        "answer": result["final_answer"],
-        "confidence_score":
-            result.get("confidence_score"),
-        "risk_level":
-            result.get("risk_level"),
-        "requires_human_review":
-            result.get("requires_human_review"),
-        "guardrail_status":
-            result.get("guardrail_status")
-    }
+            "answer": result.get("final_answer", ""),
+            "confidence_score": result.get("confidence_score"),
+            "risk_level": result.get("risk_level"),
+            "requires_human_review": result.get("requires_human_review"),
+            "guardrail_status": result.get("guardrail_status")
+        }
     except Exception as e:
 
         raise HTTPException(
