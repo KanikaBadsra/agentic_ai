@@ -55,7 +55,6 @@ def login():
         "access_token": token
     }
 
-
 @app.post("/chat")
 @limiter.limit("10/minute")
 def chat(request: Request,
@@ -100,12 +99,16 @@ def chat(request: Request,
         #     "risk_level": result.get("risk_level", "UNKNOWN"),
         #     "requires_review": result.get("requires_human_review", True)
         # }
+        final_answer = result.get("final_answer", "")
+        guardrail_status = result.get("guardrail_status") or ("PASSED" if final_answer else "BLOCKED")
+
         return {
-            "answer": result.get("final_answer", ""),
-            "confidence_score": result.get("confidence_score"),
-            "risk_level": result.get("risk_level"),
-            "requires_human_review": result.get("requires_human_review"),
-            "guardrail_status": result.get("guardrail_status")
+            "answer": final_answer,
+            "confidence_score": result.get("confidence_score", 0.0),
+            "risk_level": result.get("risk_level", "HIGH"),
+            "requires_human_review": result.get("requires_human_review", True),
+            "guardrail_status": guardrail_status,
+            "approval_id": result.get("approval_id")
         }
     except Exception as e:
 

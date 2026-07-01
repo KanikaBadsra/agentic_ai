@@ -15,7 +15,11 @@ from app.services.confidence_service import (
     determine_risk,
     requires_human_review
 )
+from app.services.approval_service import create_approval
 llm = SUMMARY_LLM
+approval_id = None
+
+
 @track_time("Summarizer Node")
 def summarizer_node(state):
     timer = start_timer()
@@ -28,12 +32,15 @@ def summarizer_node(state):
     )
     question = state["question"]
 
-    sql_result = state.get("result", [])
-
+    sql_result = state.get("sql_result", state.get("result", []))
     documents = state.get("documents", [])
-    history = get_conversation_history(
-    state["session_id"]
-)
+
+    try:
+        history = get_conversation_history(state["session_id"])
+    except Exception as error:
+        logger.warning(f"Conversation history unavailable: {error}")
+        history = []
+
     prompt = f"""
 You are an enterprise business analyst.
 Conversation History:
@@ -51,11 +58,14 @@ Retrieved Documents:
 Generate a concise business insight.
 """
 
-    response = llm.invoke(prompt)
-    
-    logger.info(
-    f"Final answer: {response.content}"
-)
+    try:
+        response = llm.invoke(prompt)
+        answer = getattr(response, "content", str(response))
+    except Exception as error:
+        logger.error(f"Summarizer LLM call failed: {error}")
+        answer = "I couldn't generate a final answer right now."
+
+    logger.info(f"Final answer: {answer}")
     duration = end_timer(timer)
 
     add_trace(
@@ -63,24 +73,21 @@ Generate a concise business insight.
         f"Summarizer Node Completed ({duration}s)"
     )
 
-    confidence = calculate_confidence(
-    state
-)
+    confidence = calculate_confidence(state)
+    risk_level = determine_risk(confidence)
+    requires_review = requires_human_review(confidence)
+    approval_id = None
 
-    risk_level = determine_risk(
-        confidence
-    )
+    if requires_review:
+        approval_id = create_approval(state)
 
-    requires_review = requires_human_review(
-    confidence
-)
+    guardrail_status = state.get("guardrail_status", "PASSED" if answer else "BLOCKED")
 
     return {
-        "final_answer": response.content,
-
+        "final_answer": answer,
         "confidence_score": confidence,
-
         "risk_level": risk_level,
-
-        "requires_human_review": requires_review
+        "requires_human_review": requires_review,
+        "approval_id": approval_id,
+        "guardrail_status": guardrail_status
     }

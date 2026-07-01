@@ -2,10 +2,10 @@ def calculate_confidence(state):
 
     confidence = 0.5
 
-    if state.get("sql_result"):
+    if state.get("sql_result") or state.get("result"):
         confidence += 0.2
 
-    if state.get("rag_result"):
+    if state.get("rag_result") or state.get("documents"):
         confidence += 0.1
 
     if state.get("analytics_result"):
